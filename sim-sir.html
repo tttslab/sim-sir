@@ -192,9 +192,11 @@
 	      // succeeded to get the data
 	      var lines = xhr.responseText.split("\n");
 	      var line;
-	      for(var i=0; i<lines.length; ++i){ // >
+	      for ( i=0; i<lines.length; ++i) { // >
 		  line = lines[i].split(',');
-		  tokyo_ni[i] = line[2];
+		  if (line.length==3) {
+		      tokyo_ni[i] = line[2];
+		  }
 	      }
 	      alert("Successfully obtained the latest Tokyo data");
 	      mupdate();
