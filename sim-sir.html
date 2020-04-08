@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <!--
 MIT License
@@ -25,10 +25,14 @@ SOFTWARE.
 -->
 
 <!--
-Version 1.0
+Version 1.01
 
 Chage log:
 2020/4/7 Initial version (ver 1.0)
+
+2020/4/7 Initial version (ver 1.01)
+Added explanation
+
 -->
 
 <html lang="ja">
@@ -53,28 +57,34 @@ Chage log:
 	}
 	label {
 	    margin-right: 10px;
-	    width:200px;
+	    width:220px;
 	    float: left;
 	}
 	ul {
-	    width: 340px;
+	    width: 400px;
 	    margin: 0 auto;
 	}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-条件を変えながらSIRモデルに基づくシミュレーションを行えます。<br>
+条件を変えながらSIRモデルに基づく感染症の流行シミュレーションを行います。<br>
 フィールド欄にパラメタを入れて、updateボタンを押すことで、グラフが更新されます。<br>
-オイラー法を用いてjavascript中で微分方程式を解いています。あくまでシミュレーションです。<br>
-間違いやバグがあれば、知らせてください。<br>
+数字表記Xe+Nは、Xの後ろに0がN個あることを示します。例えば、1e+6は1000000を表します。<br>
 SIRモデルは<a href="https://ja.wikipedia.org/w/index.php?title=SIR%E3%83%A2%E3%83%87%E3%83%AB&oldid=76820410">wikipediaの説明(2020/4/7)</a>を参考にしました。<br>
-数値計算はすべてクライアント側で行っていますが、グラフ表示用のライブラリを読むためにインターネット接続が必要です。<br>
+東京都の新型コロナウイルス感染者数は、東京都の<a href="https://stopcovid19.metro.tokyo.lg.jp/">新型コロナウイルス感染症対策サイト</a>を参照しました。<br>
 Runs SIR model based disease spread simulation. Set the parameters and press the "Update" button.
+<p>
+</p>
+C.f. <br>
+東京の<a href="https://www.metro.tokyo.lg.jp/tosei/hodohappyo/press/2020/01/31/06.html">人口</a> 約1400万 (= 1.4e+7) <br>
+東京の<a href="https://www.fukushihoken.metro.tokyo.lg.jp/iryo/iryo_hoken/kanren/kizonbyoushou.html">病床数</a> 約10万 (= 1e+5) <br>
+東京の宿泊施設の<a href="https://www.fukushihoken.metro.tokyo.lg.jp/iryo/iryo_hoken/gaikokujin/gaikokujin-kentoukai/2902.files/sankosiryo3.pdf">部屋数</a> 約16万 (= 1.6e+5) <br>
+
 
 <p>
 　<hr>
-  現状の政策を維持する場合
+  流行初期の政策を維持する場合
   <div>
   <form name="mconf">
     <ul>
@@ -88,14 +98,16 @@ Runs SIR model based disease spread simulation. Set the parameters and press the
 	<label for="population">人口 population</label>
 	<input type="text" name="population"></li>
     <li>
-	<label for="infected">患者数 infected</label>
+	<label for="infected">初期患者数 infected</label>
 	<input type="text" name="infected"></li>	
     <li>
-	<label for="removed">免疫保持者数 removed</label>
+	<label for="removed">初期免疫保持者数 removed</label>
 	<input type="text" name="removed"></li>	
     </ul>
     <input type="button" value="Update" onclick="mupdate()">
     <input type="button" value="Reset" onclick="mreset()">
+    <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle()">
+
   </form>
   <canvas id="base" width="70" height="50"></canvas>
   </div>
@@ -104,12 +116,13 @@ Runs SIR model based disease spread simulation. Set the parameters and press the
 
 <p>
   <hr>
-  途中から感染率を変化させる介入を行う場合
+  途中から感染率を変化させる介入を行う場合<br>
+（3/15を起点としてD-day日後に介入を開始することで感染率betaがbeta2となったと仮定）
   <div>
   <form name="mconf2">
     <ul>
     <li>
-       <label for="dday">対策開始日 dday</label>
+       <label for="dday">対策開始日 D-day</label>
 	<input type="text" name="dday"></li>
     <li>
        <label for="beta">感染率 beta</label>
@@ -124,19 +137,21 @@ Runs SIR model based disease spread simulation. Set the parameters and press the
 	<label for="population">人口 population</label>
 	<input type="text" name="population"></li>
     <li>
-	<label for="infected">患者数 infected</label>
+	<label for="infected">初期患者数 infected</label>
 	<input type="text" name="infected"></li>	
     <li>
-	<label for="removed">免疫保持者数 removed</label>
+	<label for="removed">初期免疫保持者数 removed</label>
 	<input type="text" name="removed"></li>	
     </ul>
     <input type="button" value="Update" onclick="mupdate2()">
     <input type="button" value="Reset" onclick="mreset2()">
+    <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle2()">
   </form>
   <canvas id="strategy" width="70" height="50"></canvas>
   </div>
 *beta2を小さくすると感染拡大のスピードが落ちてピークになるまでの時間が稼げるとともに、ピークが小さくなる<br>
-*ピークを十分に小さくするためには、beta2を大幅に小さくする必要がある
+*医療崩壊を起こさないように感染者数のピークを十分に小さくするためには、何とかしてbeta2を大幅に小さくする必要がある<br>
+*感染率を下げる手段として、手洗いの徹底や外出自粛などがある
 </p>
 
 <script>
@@ -144,9 +159,9 @@ Runs SIR model based disease spread simulation. Set the parameters and press the
 var N=10; // precision in numeric computation (larger is higher)
 var period = 200; // number of days to simulate
 
-var beta_dflt=0.00000003;
+var beta_dflt=0.000000018.toFixed(10);
 var gamma_dflt=0.05;
-var population_dflt=9273000;
+var population_dflt=14000000;
 var init_infected_dflt=10;
 var init_removed_dflt=10;
 var dday_dflt=24;
@@ -162,7 +177,7 @@ for ( d = 0; d < period; d++ ) { // >
 // Index starts from Mar 15, 2020.
 // Mar 15  : 3
 // April 1 : 66
-var tokyo_ni = new Array(3,0,12,9,7,11,7,2,16,17,41,47,40,63,68,13,78,66,97,89,117,143,83);
+var tokyo_ni = new Array(3,0,12,9,7,11,7,2,16,17,41,47,40,63,68,13,78,66,97,89,117,143,83,80);
 
 /////// Fig 1 : Base case
 var beta=beta_dflt;
@@ -188,6 +203,8 @@ rarray[0]=init_removed;
 niarray[0]=0; // dummy entory
 
 sir_euler(beta, gamma, sarray, iarray, rarray, niarray, 0, period, N);
+
+var yaxis = "logarithmic";
 
 var mfig1 = new Chart(document.getElementById("base"), {
   type: 'line',
@@ -224,7 +241,7 @@ var mfig1 = new Chart(document.getElementById("base"), {
         ticks: {
           beginAtZero: true
         },
-        type: 'logarithmic',
+        type: yaxis,
       scaleLabel: {
         display: true,
         labelString: '人数 (Number of people)'
@@ -281,10 +298,44 @@ function mreset()
 }
 
 
+function mtoggle()
+{
+  if ( yaxis == "linear" ) {
+    yaxis = "logarithmic";
+  } else {
+    yaxis = "linear";
+  }
+
+
+ mfig1.options = {
+   scales: {
+      yAxes: [{
+        ticks: {
+          beginAtZero: true
+        },
+        type: yaxis,
+        scaleLabel: {
+          display: true,
+          labelString: '人数 (Number of people)'
+      }
+      }],
+      xAxes: [{
+        scaleLabel: {
+          display: true,
+          labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+        }
+      }]
+    }
+  }
+  mfig1.update();
+}
+
+
+
 /////// Fig 2 : Take an action to reduce beta at R-th day
 var dday=dday_dflt;
 var beta2_1=beta_dflt;
-var beta2_2=beta_dflt/2;
+var beta2_2=(beta_dflt/2).toFixed(10);
 var gamma2=gamma_dflt;
 var population2=population_dflt;
 var init_infected2=init_infected_dflt;
@@ -313,6 +364,7 @@ niarray2[0]=0; // dummy entory
 sir_euler(beta2_1, gamma2, sarray2, iarray2, rarray2, niarray2, 0, dday+1, N);
 sir_euler(beta2_2, gamma2, sarray2, iarray2, rarray2, niarray2, dday, period, N);
 
+var yaxis2 = "logarithmic";
 
 var mfig2 = new Chart(document.getElementById("strategy"), {
   type: 'line',
@@ -349,21 +401,17 @@ var mfig2 = new Chart(document.getElementById("strategy"), {
         ticks: {
           beginAtZero: true
         },
-        type: 'logarithmic',
-      scaleLabel: {
-        display: true,
-        labelString: '人数 (Number of people)'
-      }
-
+        type: yaxis2,
+        scaleLabel: {
+          display: true,
+          labelString: '人数 (Number of people)'
+        }
       }],
       xAxes: [{
-
-      scaleLabel: {
-        display: true,
-        labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-      }
-
-
+        scaleLabel: {
+          display: true,
+          labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+        }
       }]
     }
   }
@@ -396,7 +444,7 @@ function mreset2()
 {
   document.mconf2.dday.value = dday = dday_dflt;
   document.mconf2.beta.value = beta2_1 = beta_dflt;
-  document.mconf2.beta2.value = beta2_2 = beta_dflt/2;
+  document.mconf2.beta2.value = beta2_2 = (beta_dflt/2).toFixed(10);
   document.mconf2.gamma.value = gamma2 = gamma_dflt;
   document.mconf2.population.value = population2 = population_dflt;
   document.mconf2.infected.value = init_infected2 = init_infected_dflt;
@@ -456,9 +504,48 @@ function sir_euler(bt,
     nia[d+1] = nwinfct;
   }
 }
+
+function mtoggle2()
+{
+  if ( yaxis2 == "linear" ) {
+    yaxis2 = "logarithmic";
+  } else {
+    yaxis2 = "linear";
+  }
+
+
+ mfig2.options = {
+   scales: {
+      yAxes: [{
+        ticks: {
+          beginAtZero: true
+        },
+        type: yaxis2,
+        scaleLabel: {
+          display: true,
+          labelString: '人数 (Number of people)'
+      }
+      }],
+      xAxes: [{
+        scaleLabel: {
+          display: true,
+          labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+        }
+      }]
+    }
+  }
+  mfig2.update();
+}
+
   </script>
 
-Takahiro Shinozaki<br>
+<hr>
+オイラー法を用いて微分方程式を解いています。<br>
+数値計算はjavascriptによりクライアント（ブラウザ）側で行っています。<br>
+あくまでシミュレーションです。間違いやバグがあれば、知らせてください。<br>
+グラフ表示用のライブラリを読むためにインターネット接続が必要です。<br>
+<p></p>
+Takahiro Shinozaki 2020/4/7<br>
 GIT Reopsitory：
 https://github.com/tttslab/sim-sir.git
   </body>
