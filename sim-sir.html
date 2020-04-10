@@ -25,17 +25,21 @@
   -->
 
 <!--
-    Version 1.1
+    Version 1.1.1
 
     Chage log:
     2020/4/7 Initial version (ver 1.0)
 
-    2020/4/7 ver 1.01
+    2020/4/7 ver 1.0.1
     Added explanation
     
     2020/4/8 ver 1.1
     Added function to read latest tokyo data
     with a helpr server side php script gettokyocsv.php
+
+    2020/4/10
+    Version 1.1.1
+    Fixed gettokyocsv.php for missing latest day data
   -->
 
 <html lang="ja">
@@ -71,13 +75,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    条件を変えながらSIRモデルに基づく感染症の流行シミュレーションを行います。<br>
+    SIRモデルに基づく感染症の流行シミュレーションを条件を変えながら行えます。<br>
     フィールド欄にパラメタを入れて、updateボタンを押すことで、グラフが更新されます。<br>
     数字表記Xe+Nは、Xの後ろに0がN個あることを示します。例えば、1e+6は1000000を表します。<br>
     
     SIRモデルは<a href="https://ja.wikipedia.org/w/index.php?title=SIR%E3%83%A2%E3%83%87%E3%83%AB&oldid=76820410">wikipediaの説明(2020/4/7)</a>を参考にしました。<br>
     グラフの縦軸は"Yaxis (Lin/Log)"ボタンを押すと、対数スケールと線形スケールを切り替えられます。<br>
     東京都の新型コロナウイルス感染（判明）者数は、東京都の<a href="https://stopcovid19.metro.tokyo.lg.jp/">新型コロナウイルス感染症対策サイト</a>を参照しています。<br>
+    シミュレーションはブラウザ側で行っていてWebサーバーに影響しないので、好きに試してみてください。<br>
     Runs SIR model based disease spread simulation. Set the parameters and press the "Update" button.
     <p>
     </p>
@@ -154,6 +159,7 @@
 	</form>
 	<canvas id="strategy" width="70" height="50"></canvas>
       </div>
+      *対策開始日D-Dayが遅くなると、感染者数のピークが来るのが早くなる<br>
       *beta2を小さくすると感染拡大のスピードが落ちてピークになるまでの時間が稼げるとともに、ピークが小さくなる<br>
       *医療崩壊を起こさないように感染者数のピークを十分に小さくするためには、何とかしてbeta2を大幅に小さくする必要がある<br>
       *感染率を下げる手段として、手洗いの徹底や外出自粛などがある
@@ -198,7 +204,7 @@
 		      tokyo_ni[i] = line[2];
 		  }
 	      }
-	      alert("Successfully obtained the latest Tokyo data");
+	      // alert("Successfully obtained the latest Tokyo data");
 	      mupdate();
 	      mupdate2();
 	  }
@@ -573,6 +579,7 @@
 
     <hr>
     オイラー法を用いて微分方程式を解いています。<br>
+    潜伏期間を考慮したい場合は、時間軸をシフトして解釈するなどしてください。<br>
     数値計算はjavascriptによりクライアント（ブラウザ）側で行っています。<br>
     あくまでシミュレーションです。間違いやバグがあれば、知らせてください。<br>
     グラフ表示用のライブラリを読むためにインターネット接続が必要です。<br>

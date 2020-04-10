@@ -32,7 +32,7 @@ $idx2ymd = [];
 $idx=0;
 $mon=3; // Let's start from March 15
 $day=15; 
-foreach ( [31, 30, 31, 30, 31, 31, 30] as $nday ) { // Num of days in Mar, May, .., Sep, 2020
+foreach ( [31, 30, 31, 30, 31, 31, 30] as $nday ) { // Num of days in Mar, Apr, .., Sep, 2020
     for ( $i=$day; $i<=$nday; $i++ ) {
         $ymd = sprintf("2020-%02d-%02d", $mon, $i);
         $ymd2idx[$ymd] = $idx;
@@ -68,7 +68,7 @@ foreach ( $file as $line ) {
     }
 }
 
-for ( $idx=0; $idx<$maxidx; $idx++ ) {
+for ( $idx=0; $idx<=$maxidx; $idx++ ) {
     if (array_key_exists($idx, $tokyo_ni)) {
         $num = $tokyo_ni[$idx];
     } else {
