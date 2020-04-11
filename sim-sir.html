@@ -94,7 +94,7 @@
 
     <p>
       　<hr>
-      流行初期の政策を維持する場合
+      流行初期の政策を維持する場合 (A scenario that does not change a strategy)
       <div>
 	<form name="mconf">
 	  <ul>
@@ -103,46 +103,46 @@
 	      <input type="text" name="beta"></li>
 	    <li>
 	      <label for="gamma">回復率 gamma</label>
-	      <input type="text" name="gamma""></li>
-					      <li>
-						<label for="population">人口 population</label>
-						<input type="text" name="population"></li>
-		     <li>
-		       <label for="infected">初期患者数 infected</label>
-		       <input type="text" name="infected"></li>	
-		     <li>
-		       <label for="removed">初期免疫保持者数 removed</label>
-		       <input type="text" name="removed"></li>	
-		     </ul>
-		     <input type="button" value="Update" onclick="mupdate()">
-		     <input type="button" value="Reset" onclick="mreset()">
-		     <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle()">
+	      <input type="text" name="gamma"></li>
+	    <li>
+	      <label for="population">人口 population</label>
+	      <input type="text" name="population"></li>
+	    <li>
+	      <label for="infected">初期患者数 infected</label>
+	      <input type="text" name="infected"></li>	
+	    <li>
+	      <label for="removed">初期免疫保持者数 removed</label>
+	      <input type="text" name="removed"></li>	
+	  </ul>
+	  <input type="button" value="Update" onclick="mupdate()">
+	  <input type="button" value="Reset" onclick="mreset()">
+	  <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle()">
 
-		     </form>
-		     <canvas id="base" width="70" height="50"></canvas>
-		     </div>
-		     *何もしないと指数関数的に患者数が増加していき、ピーク時の患者数が非常に多くなる
-		     </p>
+	</form>
+	<canvas id="base" width="70" height="50"></canvas>
+      </div>
+      *何もしないと指数関数的に患者数が増加していき、ピーク時の患者数が非常に多くなる
+    </p>
 
-		     <p>
-		       <hr>
-		       途中から感染率を変化させる介入を行う場合<br>
-		       （3/15を起点としてD-day日後に介入を開始することで感染率betaがbeta2となったと仮定）
-		       <div>
-			 <form name="mconf2">
-			   <ul>
-			     <li>
-			       <label for="dday">対策開始日 D-day</label>
-			       <input type="text" name="dday"></li>
-			     <li>
-			       <label for="beta">感染率 beta</label>
-			       <input type="text" name="beta"></li>
-			     <li>
-			       <label for="beta2">対策後感染率 beta2</label>
-			       <input type="text" name="beta2"></li>
-			     <li>
-			       <label for="gamma">回復率 gamma</label>
-			       <input type="text" name="gamma""></li>
+    <p>
+      <hr>
+      途中から感染率を変化させる介入を行う場合 (A scenario that changes a strategy)<br>
+      （3/15を起点としてD-day日後に介入を開始することで感染率betaがbeta2となったと仮定）
+      <div>
+	<form name="mconf2">
+	  <ul>
+	    <li>
+	      <label for="dday">対策開始日 D-day</label>
+	      <input type="text" name="dday"></li>
+	    <li>
+	      <label for="beta">感染率 beta</label>
+	      <input type="text" name="beta"></li>
+	    <li>
+	      <label for="beta2">対策後感染率 beta2</label>
+	      <input type="text" name="beta2"></li>
+	    <li>
+	      <label for="gamma">回復率 gamma</label>
+	      <input type="text" name="gamma"></li>
 	    <li>
 	      <label for="population">人口 population</label>
 	      <input type="text" name="population"></li>
@@ -500,6 +500,38 @@
       }
 
 
+      function mtoggle2()
+      {
+	  if ( yaxis2 == "linear" ) {
+	      yaxis2 = "logarithmic";
+	  } else {
+	      yaxis2 = "linear";
+	  }
+
+
+	  mfig2.options = {
+	      scales: {
+		  yAxes: [{
+		      ticks: {
+			  beginAtZero: true
+		      },
+		      type: yaxis2,
+		      scaleLabel: {
+			  display: true,
+			  labelString: '人数 (Number of people)'
+		      }
+		  }],
+		  xAxes: [{
+		      scaleLabel: {
+			  display: true,
+			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+		      }
+		  }]
+	      }
+	  }
+	  mfig2.update();
+      }
+
       /////// Numeric computation
 
       // Solve SIR by Euler method
@@ -544,37 +576,6 @@
 	  }
       }
 
-      function mtoggle2()
-      {
-	  if ( yaxis2 == "linear" ) {
-	      yaxis2 = "logarithmic";
-	  } else {
-	      yaxis2 = "linear";
-	  }
-
-
-	  mfig2.options = {
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis2,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-		  }],
-		  xAxes: [{
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-		  }]
-	      }
-	  }
-	  mfig2.update();
-      }
 
     </script>
 
