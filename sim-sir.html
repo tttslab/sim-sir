@@ -25,7 +25,7 @@
   -->
 
 <!--
-    Version 1.1.1
+    Version 1.2
 
     Chage log:
     2020/4/7 Initial version (ver 1.0)
@@ -40,6 +40,10 @@
     2020/4/10
     Version 1.1.1
     Fixed gettokyocsv.php for missing latest day data
+
+    2020/8/1
+    version 1.2
+    Added fig3 for the 2nd wave
   -->
 
 <html lang="ja">
@@ -94,7 +98,8 @@
 
     <p>
       　<hr>
-      流行初期の政策を維持する場合 (A scenario that does not change a strategy)
+      流行初期の政策を維持する場合 (A scenario that does not change a strategy)<br>
+      （2020/3/15を起点として2020/4/7までのデータにパラメタを調整）
       <div>
 	<form name="mconf">
 	  <ul>
@@ -166,10 +171,46 @@
       *感染率を下げる手段として、手洗いの徹底や外出自粛などがある
     </p>
 
+    <p>
+      <hr>
+      2020/5/14 (3/15から60日目)を第２波の起点として設定して8/1までのデータにパラメタを合わせた場合
+      <div>
+	<form name="mconf3">
+	  <ul>
+	    <li>
+	      <label for="dday">対策開始日 D-day</label>
+	      <input type="text" name="dday"></li>
+	    <li>
+	      <label for="beta">感染率 beta</label>
+	      <input type="text" name="beta"></li>
+	    <li>
+	      <label for="beta2">対策後感染率 beta2</label>
+	      <input type="text" name="beta2"></li>
+	    <li>
+	      <label for="gamma">回復率 gamma</label>
+	      <input type="text" name="gamma"></li>
+	    <li>
+	      <label for="population">人口 population</label>
+	      <input type="text" name="population"></li>
+	    <li>
+	      <label for="infected">初期患者数 infected</label>
+	      <input type="text" name="infected"></li>	
+	    <li>
+	      <label for="removed">初期免疫保持者数 removed</label>
+	      <input type="text" name="removed"></li>	
+	  </ul>
+	  <input type="button" value="Update" onclick="mupdate3()">
+	  <input type="button" value="Reset" onclick="mreset3()">
+	  <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle3()">
+	</form>
+	<canvas id="strategy3" width="70" height="50"></canvas>
+      </div>
+    </p>
+
     <script>
       /////// General settings
       var N=10; // precision in numeric computation (larger is higher)
-      var period = 200; // number of days to simulate
+      var period = 400; // number of days to simulate
 
       var beta_dflt=0.000000018.toFixed(10);
       var gamma_dflt=0.05;
@@ -208,6 +249,7 @@
 	      // alert("Successfully obtained the latest Tokyo data");
 	      mupdate();
 	      mupdate2();
+	      mupdate3();
 	  }
       };
       /*
@@ -263,11 +305,6 @@
 		  data: iarray,
 		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
 		  borderColor: "#3cba9f",
-		  fill: false
-	      }, { 
-		  data: sarray,
-		  label: "感受性保持者数 (Susceptible)　　　　　　　　                                 ",
-		  borderColor: "#4cba00",
 		  fill: false
 	      }
 			]
@@ -429,11 +466,6 @@
 		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
 		  borderColor: "#3cba9f",
 		  fill: false
-	      }, { 
-		  data: sarray2,
-		  label: "感受性保持者数 (Susceptible)　　　　　　　　                                 ",
-		  borderColor: "#4cba00",
-		  fill: false
 	      }
 			]
 
@@ -542,6 +574,173 @@
 	  mfig2.update();
       }
 
+
+
+      /////// Fig 3 : Adjusted to the 2nd wave in Tokyo
+      var dday3=dday_dflt+120;
+      var beta3_1=(beta_dflt/2.4).toFixed(10);
+      var beta3_2=(beta_dflt/2.4).toFixed(10);
+      var gamma3=gamma_dflt;
+      var population3=population_dflt;
+      var init_infected3=50;
+      var init_removed3=init_removed_dflt;
+
+
+      document.mconf3.dday.value = dday3;
+      document.mconf3.beta.value = beta3_1;
+      document.mconf3.beta2.value = beta3_2;
+      document.mconf3.gamma.value = gamma3;
+      document.mconf3.population.value = population3;
+      document.mconf3.infected.value = init_infected3;
+      document.mconf3.removed.value = init_removed3;
+
+      var darray3 = new Array();  // day
+      var sarray3 = new Array();  // number of susceptible people
+      var iarray3 = new Array();  // number of infected people
+      var rarray3 = new Array();  // number of removed people
+      var niarray3 = new Array(); // newly infected people in the day
+
+      sarray3[0]=population2-init_infected2-init_removed2;
+      iarray3[0]=init_infected2;
+      rarray3[0]=init_removed2;
+      niarray3[0]=0; // dummy entory
+
+      sir_euler(beta_dflt/5, gamma3, sarray3, iarray3, rarray3, niarray3, 0, 61, N);
+      sir_euler(beta3_1, gamma3, sarray3, iarray3, rarray3, niarray3, 60, dday3+1, N);
+      sir_euler(beta3_2, gamma3, sarray3, iarray3, rarray3, niarray3, dday3, period, N);
+
+      var yaxis3 = "logarithmic";
+
+      var mfig3 = new Chart(document.getElementById("strategy3"), {
+	  type: 'line',
+	  data: {
+	      labels: darray,
+	      datasets: [{ 
+		  data: tokyo_ni,
+		  label: "東京の一日の新規感染者数 (Tokyo new infection in a day)             ",
+		  borderColor: "#3e95cd",
+		  fill: false
+	      }, { 
+		  data: niarray3,
+		  label: "SIRモデルによる一日の新規感染者数 (SIR new infection in a day)",
+		  borderColor: "#8e5ea2",
+		  fill: false
+	      }, { 
+		  data: iarray3,
+		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
+		  borderColor: "#3cba9f",
+		  fill: false
+	      }
+			]
+
+	  },
+	  options: {
+	      /*
+	       title: {
+	       display: true,
+	       text: 'SIR model based prediction'
+	       },
+	      */
+	      scales: {
+		  yAxes: [{
+		      ticks: {
+			  beginAtZero: true
+		      },
+		      type: yaxis3,
+		      scaleLabel: {
+			  display: true,
+			  labelString: '人数 (Number of people)'
+		      }
+		  }],
+		  xAxes: [{
+		      scaleLabel: {
+			  display: true,
+			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+		      }
+		  }]
+	      }
+	  }
+      });
+
+      // Update the graph using specified SIR configuration
+      function mupdate3()
+      {
+
+	  dday3 = parseInt(document.mconf3.dday.value);
+	  beta3_1 = parseFloat(document.mconf3.beta.value);
+	  beta3_2 = parseFloat(document.mconf3.beta2.value);
+	  gamma3 = parseFloat(document.mconf3.gamma.value);
+	  population3 = parseFloat(document.mconf3.population.value);
+	  init_infected3 = parseFloat(document.mconf3.infected.value);
+	  init_removed3 = parseFloat(document.mconf3.removed.value);
+
+	  sarray3[0]=population3-init_infected3-init_removed3;
+	  iarray3[0]=init_infected3;
+	  rarray3[0]=init_removed3;
+	  niarray3[0]=0; // dummy entory
+
+	  sir_euler(beta_dflt/5, gamma3, sarray3, iarray3, rarray3, niarray3, 0, 61, N);
+	  sir_euler(beta3_1, gamma3, sarray3, iarray3, rarray3, niarray3, 60, dday3+1, N);
+	  sir_euler(beta3_2, gamma3, sarray3, iarray3, rarray3, niarray3, dday3, period, N);
+	  mfig3.update();
+      }
+
+      // Reset the SIR parameters and update the graph
+      function mreset3()
+      {
+	  document.mconf3.dday.value = dday3 = dday_dflt+120;
+	  document.mconf3.beta.value = beta3_1 = (beta_dflt/2.4).toFixed(10);
+	  document.mconf3.beta2.value = beta3_2 = (beta_dflt/2.4).toFixed(10);
+	  document.mconf3.gamma.value = gamma3 = gamma_dflt;
+	  document.mconf3.population.value = population3 = population_dflt;
+	  document.mconf3.infected.value = init_infected3 = 50;
+	  document.mconf3.removed.value = init_removed3 = init_removed_dflt;
+
+	  sarray3[0]=population3-init_infected3-init_removed3;
+	  iarray3[0]=init_infected3;
+	  rarray3[0]=init_removed3;
+	  niarray3[0]=0; // dummy entory
+
+	  sir_euler(beta_dflt/5, gamma3, sarray3, iarray3, rarray3, niarray3, 0, 61, N);
+	  sir_euler(beta3_1, gamma3, sarray3, iarray3, rarray3, niarray3, 60, dday3+1, N);
+	  sir_euler(beta3_2, gamma3, sarray3, iarray3, rarray3, niarray3, dday3, period, N);
+	  mfig3.update();
+      }
+
+
+      function mtoggle3()
+      {
+	  if ( yaxis3 == "linear" ) {
+	      yaxis3 = "logarithmic";
+	  } else {
+	      yaxis3 = "linear";
+	  }
+
+
+	  mfig3.options = {
+	      scales: {
+		  yAxes: [{
+		      ticks: {
+			  beginAtZero: true
+		      },
+		      type: yaxis3,
+		      scaleLabel: {
+			  display: true,
+			  labelString: '人数 (Number of people)'
+		      }
+		  }],
+		  xAxes: [{
+		      scaleLabel: {
+			  display: true,
+			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+		      }
+		  }]
+	      }
+	  }
+	  mfig3.update();
+      }
+
+      
       /////// Numeric computation
 
       // Solve SIR by Euler method
