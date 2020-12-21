@@ -25,7 +25,7 @@
   -->
 
 <!--
-    Version 1.2
+    Version 1.3
 
     Chage log:
     2020/4/7 Initial version (ver 1.0)
@@ -44,6 +44,11 @@
     2020/8/1
     version 1.2
     Added fig3 for the 2nd wave
+
+    2020/12/20
+    version 1.3
+    Adjusted parameters for the third wave
+    Rewrite the javascript code using class to simplify the handling of the multiple graphs
   -->
 
 <html lang="ja">
@@ -98,12 +103,23 @@
 
     <p>
       　<hr>
-      流行初期の政策を維持する場合 (A scenario that does not change a strategy)<br>
-      （2020/3/15を起点として2020/4/7までのデータにパラメタを調整）
+       第一波のシミュレーション<br>
+       2020/3/15を起点として26日目(2020/4/10)頃までの東京のデータ（主に新規感染者数）
+       に合うようにパラメタを調整したもの。4/10以降は社会的な感染拡大の抑制が奏功するなどして予測値から外れて感染者数が減少している。<br>
+       感染率(beta)は感染の広がりやすさを示すパラメタ。
+       ウイルスの感染力が大きくなれば大きくなり、社会的に有効な予防政策を行えば小さくなる。
+       回復率(gamma)は、感染した後回復するか隔離されるなどして他人へ感染を広げなくなるまでの期間の逆数。
+       例えば感染者が他人へ感染を広げる期間が平均5日ほどだと仮定すると0.2.
+       初期免疫保持者数(removed)は人口に比べて十分小さい場合はシミュレーション結果への影響は小さいが、大きくなると感染の収束に貢献する。<br>
+       実効再生産数は感染率と感受性保持者数（感染する可能性のある人の数で、人口から感染者数と免疫保持者数を引いた数）に比例し回復率に反比例する。
+       実効再生産数が1.0を下回れば感染は収束する。
       <div>
 	<form name="mconf">
 	  <ul>
 	    <li>
+	      <label for="sday">開始日 S-day</label>
+	      <input type="text" name="sday"></li>
+	    <li>
 	      <label for="beta">感染率 beta</label>
 	      <input type="text" name="beta"></li>
 	    <li>
@@ -118,33 +134,34 @@
 	    <li>
 	      <label for="removed">初期免疫保持者数 removed</label>
 	      <input type="text" name="removed"></li>	
+	    <li>
+	      実効再生産数(day <output name="rday">XXXX</output>) = <output name="srep">XXXX</output>
+	      <!-- 感受性保持者数*beta/gamma -->
+	    </li>
 	  </ul>
-	  <input type="button" value="Update" onclick="mupdate()">
-	  <input type="button" value="Reset" onclick="mreset()">
-	  <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle()">
+	  <input type="button" value="Update" onclick="sirwave1.mupdate()">
+	  <input type="button" value="Reset" onclick="sirwave1.mreset()">
+	  <input type="button" value="Yaxis (Lin/Log)" onclick="sirwave1.mtoggle()">
 
 	</form>
-	<canvas id="base" width="70" height="50"></canvas>
+	<canvas id="sirwave1" width="70" height="50"></canvas>
       </div>
-      *何もしないと指数関数的に患者数が増加していき、ピーク時の患者数が非常に多くなる
     </p>
 
     <p>
       <hr>
-      途中から感染率を変化させる介入を行う場合 (A scenario that changes a strategy)<br>
-      （3/15を起点としてD-day日後に介入を開始することで感染率betaがbeta2となったと仮定）
+       第二波のシミュレーション<br>
+       2020/3/15から70日目(2020/5/24)を起点として140日目(2020/8/2)頃までの東京のデータ（主に新規感染者数）
+       に合うようにパラメタを調整したもの。8/2以降は社会的な感染拡大の抑制が奏功するなどして予測値から外れて感染者数が減少している。<br>
       <div>
 	<form name="mconf2">
 	  <ul>
 	    <li>
-	      <label for="dday">対策開始日 D-day</label>
-	      <input type="text" name="dday"></li>
+	      <label for="sday">開始日 S-day</label>
+	      <input type="text" name="sday"></li>
 	    <li>
 	      <label for="beta">感染率 beta</label>
 	      <input type="text" name="beta"></li>
-	    <li>
-	      <label for="beta2">対策後感染率 beta2</label>
-	      <input type="text" name="beta2"></li>
 	    <li>
 	      <label for="gamma">回復率 gamma</label>
 	      <input type="text" name="gamma"></li>
@@ -157,26 +174,67 @@
 	    <li>
 	      <label for="removed">初期免疫保持者数 removed</label>
 	      <input type="text" name="removed"></li>	
+	    <li>実効再生産数(day <output name="rday">XXXX</output>) = <output name="srep">XXXX</output> </li>
+	    <!-- 感受性保持者数*beta/gamma -->
 	  </ul>
-	  <input type="button" value="Update" onclick="mupdate2()">
-	  <input type="button" value="Reset" onclick="mreset2()">
-	  <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle2()">
+	  <input type="button" value="Update" onclick="sirwave2.mupdate()">
+	  <input type="button" value="Reset" onclick="sirwave2.mreset()">
+	  <input type="button" value="Yaxis (Lin/Log)" onclick="sirwave2.mtoggle()">
 	</form>
-	<canvas id="strategy" width="70" height="50"></canvas>
+	<canvas id="sirwave2" width="70" height="50"></canvas>
       </div>
-      *対策開始日D-Dayが遅くなると、感染者数のピークが来るのが早くなる<br>
-      *beta2を小さくすると感染拡大のスピードが落ちてピークになるまでの時間が稼げるとともに、ピークが小さくなる<br>
-      *医療崩壊を起こさないように感染者数のピークを小さくするためには、beta2を小さくする必要がある<br>
-      *beta2をbetaの半分にするのでは足りず、もっと大幅に減らす必要がある<br>
-      *感染率を下げる手段として、手洗いの徹底や外出自粛などがある
     </p>
 
     <p>
       <hr>
-      2020/5/14 (3/15から60日目)を第２波の起点として設定して8/1までのデータにパラメタを合わせた場合
+       第三波のシミュレーション（新たな対策を行わない場合）<br>
+       2020/3/15から220日目(2020/10/21)を起点として280日目(2020/12/20)頃までの東京のデータ（主に新規感染者数）
+       に合うようにパラメタを調整したもの。第一波や第二波と比較すると拡大は緩やかだが、
+       このまま新たな対策を何もしないとおよそ一ヶ月で感染者数が倍になる。<br>
       <div>
 	<form name="mconf3">
 	  <ul>
+	    <li>
+	      <label for="sday">開始日 S-day</label>
+	      <input type="text" name="sday"></li>
+	    <li>
+	      <label for="beta">感染率 beta</label>
+	      <input type="text" name="beta"></li>
+	    <li>
+	      <label for="gamma">回復率 gamma</label>
+	      <input type="text" name="gamma"></li>
+	    <li>
+	      <label for="population">人口 population</label>
+	      <input type="text" name="population"></li>
+	    <li>
+	      <label for="infected">初期患者数 infected</label>
+	      <input type="text" name="infected"></li>	
+	    <li>
+	      <label for="removed">初期免疫保持者数 removed</label>
+	      <input type="text" name="removed"></li>	
+	    <li>実効再生産数(day <output name="rday">XXXX</output>) = <output name="srep">XXXX</output> </li>
+	    <!-- 感受性保持者数*beta/gamma  -->
+	  </ul>
+	  <input type="button" value="Update" onclick="sirwave3.mupdate()">
+	  <input type="button" value="Reset" onclick="sirwave3.mreset()">
+	  <input type="button" value="Yaxis (Lin/Log)" onclick="sirwave3.mtoggle()">
+	</form>
+	<canvas id="sirwave3" width="70" height="50"></canvas>
+      </div>
+    </p>
+
+    <p>
+      <hr>
+       第三波のシミュレーション（新たな対策を行う場合）<br>
+       2020/3/15から220日目(2020/10/21)を起点として280日目(2020/12/20)頃までの東京のデータ（主に新規感染者数）
+       に合うようにパラメタを調整したもの。
+       社会的な感染対策により途中から（例えば290日目(2020/12/30)から）感染率(beta2)を少し下げれられたとすると、感染拡大をとめられる。<br>
+      <div>
+	<form name="mconf3a">
+	  <ul>
+	    <li>
+	      <label for="sday">開始日 S-day</label>
+	      <input type="text" name="sday"></li>
 	    <li>
 	      <label for="dday">対策開始日 D-day</label>
 	      <input type="text" name="dday"></li>
@@ -198,16 +256,15 @@
 	    <li>
 	      <label for="removed">初期免疫保持者数 removed</label>
 	      <input type="text" name="removed"></li>	
+	    <li>実効再生産数(day <output name="rday">XXXX</output>) = <output name="srep">XXXX</output> </li>
+	    <li>実効再生産数(day <output name="rday2">XXXX</output>) = <output name="drep">XXXX</output> </li>
 	  </ul>
-	  <input type="button" value="Update" onclick="mupdate3()">
-	  <input type="button" value="Reset" onclick="mreset3()">
-	  <input type="button" value="Yaxis (Lin/Log)" onclick="mtoggle3()">
+	  <input type="button" value="Update" onclick="sirwave3a.mupdate()">
+	  <input type="button" value="Reset" onclick="sirswave3a.mreset()">
+	  <input type="button" value="Yaxis (Lin/Log)" onclick="sirwave3a.mtoggle()">
 	</form>
-	<canvas id="strategy3" width="70" height="50"></canvas>
+	<canvas id="sirwave3a" width="70" height="50"></canvas>
       </div>
-      *第１波と比較すると増加スピードは第２波の方が小さい（betaが1/2.4位）<br>
-      *何か対策を行ってbetaを8月1日時点の1/2にできれば増加スピードが大幅に抑えられる(beta=0.0000000075, beta2=0.00000000375)<br>
-      *何か対策を行ってbetaを8月1日時点の2/5にできれば減少させられる(beta=0.0000000075, beta2=0.000000003)<br>
     </p>
 
     <script>
@@ -215,12 +272,277 @@
       var N=10; // precision in numeric computation (larger is higher)
       var period = 400; // number of days to simulate
 
-      var beta_dflt=0.000000018.toFixed(10);
-      var gamma_dflt=0.05;
       var population_dflt=14000000;
       var init_infected_dflt=10;
       var init_removed_dflt=10;
+      var beta_dflt=0.000000018.toFixed(10);
+      var gamma_dflt=0.05;
       var dday_dflt=24;
+
+      const sirsim = class {
+	  constructor(mconf, is_act, canvas_name, 
+                      population, init_infected, init_removed, 
+                      beta_1, beta_2, gamma, sday, dday, period, N) {
+            this.mconf = mconf;
+            this.is_act = is_act;
+            this.canvas_name = canvas_name;
+
+            this.population_dflt = population;
+            this.init_infected_dflt = init_infected;
+            this.init_removed_dflt = init_removed;
+            this.beta_1_dflt = beta_1;
+            this.beta_2_dflt = beta_2;
+            this.gamma_dflt = gamma;
+            this.sday_dflt = sday;
+            this.dday_dflt = dday;
+
+            this.population = population;
+            this.init_infected = init_infected;
+            this.init_removed = init_removed;
+  	    this.beta_1 = beta_1;
+	    this.beta_2 = beta_2;
+            this.gamma = gamma;
+            this.sday = sday;
+            this.dday = dday;
+            this.period = period;
+            this.N = N;
+
+            this.mconf.population.value = population;
+            this.mconf.infected.value = init_infected;
+            this.mconf.removed.value = init_removed;
+            this.mconf.beta.value = beta_1;
+            if (this.is_act == 1) {
+              this.mconf.beta2.value = beta_2;
+            }
+            this.mconf.gamma.value = gamma;
+            this.mconf.sday.value = sday;
+            this.mconf.rday.value = sday;
+            if (this.is_act == 1) {
+              this.mconf.dday.value = dday;
+              this.mconf.rday.value = dday;
+            }
+
+            this.sarray = new Array();  // number of susceptible people
+            this.iarray = new Array();  // number of infected people
+            this.rarray = new Array();  // number of removed people
+            this.niarray = new Array(); // newly infected people in the day
+
+            this.sarray[0] = population - init_infected - init_removed;
+            this.iarray[0] = init_infected;
+            this.rarray[0] = init_removed;
+            this.niarray[0] = 0; // dummy entory
+
+            this.beta_balance = this.gamma/(this.population - this.init_infected - this.init_removed);
+
+            if (this.is_act == 1) {
+                sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
+                sir_euler(this.beta_2, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
+            } else {
+                sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
+            }
+            for (let t=0; t < this.period; t++) {
+              if (this.niarray[t] < 0.01) this.niarray[t] = 0.01; // flooring for log scale plot
+              if (this.iarray[t] < 0.01) this.iarray[t] = 0.01; // flooring for log scale plot
+            }
+
+            this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma;
+            this.mconf.rday.value = String(this.sday);
+            this.mconf.srep.value = String(this.srep.toFixed(3));
+            if (this.is_act == 1) {
+              this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma;
+              this.mconf.rday2.value = String(this.dday);
+              this.mconf.drep.value = String(this.drep.toFixed(3));
+            }
+
+            this.yaxis = "logarithmic";
+
+            this.mfig = new Chart(document.getElementById(canvas_name), {
+		  type: 'line',
+		  data: {
+		  labels: darray,
+		  datasets: [{ 
+		  data: tokyo_ni,
+		  label: "東京の一日の新規感染者数 (Tokyo new infection in a day)             ",
+		  borderColor: "#3e95cd",
+		  fill: false
+		  }, { 
+		  data: this.niarray,
+		  label: "SIRモデルによる一日の新規感染者数 (SIR new infection in a day)",
+		  borderColor: "#8e5ea2",
+		  fill: false
+		  }, { 
+		  data: this.iarray,
+		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
+		  borderColor: "#3cba9f",
+		  fill: false
+		  }
+		  ]
+		  },
+		  options: {
+		  /*
+		  title: {
+		  display: true,
+		  text: 'SIR model based prediction'
+		  },
+		  */
+		  scales: {
+		  yAxes: [{
+		  ticks: {
+		  beginAtZero: true
+		  },
+		  type: this.yaxis,
+		  scaleLabel: {
+		  display: true,
+		  labelString: '人数 (Number of people)'
+		  }
+		  }],
+		  xAxes: [{
+		  scaleLabel: {
+		  display: true,
+		  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+		  }
+		  }]
+		  }
+		  }
+		  });
+
+          }
+
+          // Update the graph using specified SIR configuration
+          mupdate()
+          {
+              this.population = parseFloat(this.mconf.population.value);
+              this.infected = parseFloat(this.mconf.infected.value);
+              this.removed = parseFloat(this.mconf.removed.value);
+              this.beta_1 = parseFloat(this.mconf.beta.value);
+              if (this.is_act == 1) {
+                  this.beta_2 = parseFloat(this.mconf.beta2.value);
+              }
+              this.gamma = parseFloat(this.mconf.gamma.value);
+              this.sday = parseInt(this.mconf.sday.value);
+              if (this.is_act == 1) {
+                  this.dday = parseInt(this.mconf.dday.value);
+              }
+
+              this.sarray[0] = this.population - this.infected - this.removed;
+              this.iarray[0] = this.infected;
+              this.rarray[0] = this.removed;
+              this.niarray[0] = 0; // dummy entory
+
+              this.beta_balance = this.gamma/(this.population - this.init_infected - this.init_removed);
+
+              if (this.is_act == 1) {
+                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
+                  sir_euler(this.beta_2, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
+              } else {
+                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
+              }
+              for (let t=0; t < this.period; t++) {
+                if (this.niarray[t] < 0.01) this.niarray[t] = 0.01; // flooring for log scale plot
+                if (this.iarray[t] < 0.01) this.iarray[t] = 0.01; // flooring for log scale plot
+              }
+
+              this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma;
+              this.mconf.rday.value = String(this.sday);
+              this.mconf.srep.value = String(this.srep.toFixed(3));
+              if (this.is_act == 1) {
+                this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma;
+                this.mconf.rday2.value = String(this.dday);
+                this.mconf.drep.value = String(this.drep.toFixed(3));
+              }
+
+              this.mfig.update();
+              return this.period;
+          }
+
+          // Reset the SIR parameters and update the graph
+          mreset()
+          {
+              this.mconf.population.value = this.population = this.population_dflt;
+              this.mconf.infected.value = this.infected = this.init_infected_dflt;
+              this.mconf.removed.value = this.removed = this.init_removed_dflt;
+              this.mconf.beta.value = this.beta_1 = this.beta_1_dflt;
+              if (this.is_act == 1) {
+                  this.mconf.beta2.value = this.beta_2 = this.beta_2_dflt
+              }
+              this.mconf.gamma.value = this.gamma = this.gamma_dflt;
+              this.mconf.sday.value = this.sday = this.sday_dflt;
+              if (this.is_act == 1) {
+                  this.mconf.dday.value = this.dday = this.dday_dflt;
+              }
+
+              this.sarray[0] = this.population - this.infected - this.removed;
+              this.iarray[0] = this.infected;
+              this.rarray[0] = this.removed;
+              this.niarray[0] = 0; // dummy entory
+
+              this.beta_balance = this.gamma/(this.population - this.init_infected - this.init_removed);
+
+              if (this.is_act == 1) {
+                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
+                  sir_euler(this.beta_2, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
+
+              } else {
+                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
+              }
+              for (let t=0; t < this.period; t++) {
+                if (this.niarray[t] < 0.01) this.niarray[t] = 0.01; // flooring for log scale plot
+                if (this.iarray[t] < 0.01) this.iarray[t] = 0.01; // flooring for log scale plot
+              }
+
+              this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma;
+              this.mconf.rday.value = String(this.sday);
+              this.mconf.srep.value = String(this.srep.toFixed(3));
+              if (this.is_act == 1) {
+                this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma;
+                this.mconf.rday2.value = String(this.dday);
+                this.mconf.drep.value = String(this.drep.toFixed(3));
+              }
+
+              this.mfig.update();
+              return this.period;
+          }
+
+
+          mtoggle()
+          {
+              if ( this.yaxis == "linear" ) {
+	          this.yaxis= "logarithmic";
+              } else {
+                  this.yaxis = "linear";
+              }
+
+
+              this.mfig.options = {
+                  scales: {
+		  yAxes: [{
+		  ticks: {
+		  beginAtZero: true
+		  },
+		  type: this.yaxis,
+		  scaleLabel: {
+		  display: true,
+		  labelString: '人数 (Number of people)'
+		  }
+		  }],
+		  xAxes: [{
+		  scaleLabel: {
+		  display: true,
+		  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
+		  }
+		  }]
+		  }
+              }
+              this.mfig.update();
+              return this.period;
+          }
+      }
 
       // Time unit : day
       var darray = new Array();  // day
@@ -228,13 +550,35 @@
 	  darray[d] = d;
       }
 
-      /////// Tokyo Data
+      /////// Tokyo Data (Offline)
       // number of newly infected people in a day
       // Index starts from Mar 15, 2020.
       var tokyo_ni = new Array();
       // e.g. Mar 15  : 3, April 1 : 66
-      tokyo_ni = [3,0,12,9,7,11,7,2,16,17,41,47,40,63,68,13,78,66,97,89,117,143,83,80];
+//      tokyo_ni = [3,0,12,9,7,11,7,2,16,17,41,47,40,63,68,13,78,66,97,89,117,143,83,80];
+      tokyo_ni = [3,0,12,9,7,11,7,3,16,18,41,46,40,64,72,12,78,67,98,92,118,141,85,87,156,183,199,198,174,100,159,127,151,206,186,109,101,123,123,134,170,119,82,41,113,47,59,165,154,93,87,57,37,23,39,36,22,15,27,10,30,9,14,5,10,5,5,11,3,2,14,8,10,11,15,21,14,5,13,34,12,28,20,26,14,13,12,18,22,25,24,47,48,27,16,41,35,39,34,29,31,55,48,54,57,60,58,54,67,107,124,131,111,102,106,75,224,243,206,206,118,143,165,286,293,290,188,168,237,238,366,260,295,239,131,266,250,367,462,472,292,258,309,263,360,461,429,331,197,188,222,206,389,385,260,161,207,186,339,258,256,212,95,182,236,250,226,247,148,100,170,141,211,136,181,116,76,170,149,276,187,226,146,80,191,163,171,220,218,162,97,88,59,193,195,269,144,78,211,194,234,196,205,107,65,176,140,248,203,248,146,78,166,177,284,183,235,132,78,139,145,185,186,201,124,102,158,171,220,203,215,116,87,209,122,269,242,294,189,157,293,316,392,374,352,255,180,298,485,533,522,539,391,314,186,401,481,570,561,418,311,372,500,533,449,584,327,299,352,572,602,595,621,480,305,460,678,822,664,736]; // 2020.12.20
+tokyo_ni[1] = 0.01; // flooring for log-scale plot
 
+
+      var sirwave1 = new sirsim(document.mconf, 0, "sirwave1",
+                               population_dflt, 15, init_removed_dflt,
+                               2.5e-8, 0, 0.2, 0, 0, period, N);
+
+      var sirwave2 = new sirsim(document.mconf2, 0, "sirwave2",
+                               population_dflt, 50, init_removed_dflt,
+                               1.8e-8, 0, 0.2, 70, 0, period, N);
+
+      var sirwave3 = new sirsim(document.mconf3, 0, "sirwave3",
+                               population_dflt, 800, 50000,
+                               1.62e-8, 0, 0.2, 220, 0, period, N);
+
+      var sirwave3a = new sirsim(document.mconf3a, 1, "sirwave3a",
+                               population_dflt, 800, 50000,
+                               1.62e-8, 1.62e-8*0.85, 0.2, 220, 290, period, N);
+
+
+      /////// Tokyo Data (Online)
+      var orgdata = "";
       var xhr = new XMLHttpRequest();
       var csvurl = "http://www.ts.ip.titech.ac.jp/shinot/lectures/numcomp/gettokyocsv.php";
       xhr.open('GET', csvurl, true);
@@ -246,13 +590,16 @@
 	      for ( i=0; i<lines.length; ++i) { // >
 		  line = lines[i].split(',');
 		  if (line.length==3) {
-		      tokyo_ni[i] = line[2];
+		      tokyo_ni[i] = parseFloat(this.mconf.dday.value); + 0.1; // add a small positive number (0.1) for flooring for the log scale plot
+                      orgdata = orgdata + lines[i] + "\n";
 		  }
 	      }
 	      // alert("Successfully obtained the latest Tokyo data");
-	      mupdate();
-	      mupdate2();
-	      mupdate3();
+//              console.log(orgdata);
+	      sirwave1.mupdate();
+	      sirwave2.mupdate();
+	      sirwave3.mupdate();
+	      sirwave3a.mupdate();
 	  }
       };
       /*
@@ -262,486 +609,6 @@
       */
       xhr.send(null);
 
-
-      /////// Fig 1 : Base case
-      var beta=beta_dflt;
-      var gamma=gamma_dflt;
-      var population=population_dflt;
-      var init_infected=init_infected_dflt;
-      var init_removed=init_removed_dflt;
-
-      document.mconf.beta.value = beta;
-      document.mconf.gamma.value = gamma;
-      document.mconf.population.value = population;
-      document.mconf.infected.value = init_infected;
-      document.mconf.removed.value = init_removed;
-
-      var sarray = new Array();  // number of susceptible people
-      var iarray = new Array();  // number of infected people
-      var rarray = new Array();  // number of removed people
-      var niarray = new Array(); // newly infected people in the day
-
-      sarray[0]=population-init_infected-init_removed;
-      iarray[0]=init_infected;
-      rarray[0]=init_removed;
-      niarray[0]=0; // dummy entory
-
-      sir_euler(beta, gamma, sarray, iarray, rarray, niarray, 0, period, N);
-
-      var yaxis = "logarithmic";
-
-      var mfig1 = new Chart(document.getElementById("base"), {
-	  type: 'line',
-	  data: {
-	      labels: darray,
-	      datasets: [{ 
-		  data: tokyo_ni,
-		  label: "東京の一日の新規感染者数 (Tokyo new infection in a day)             ",
-		  borderColor: "#3e95cd",
-		  fill: false
-	      }, { 
-		  data: niarray,
-		  label: "SIRモデルによる一日の新規感染者数 (SIR new infection in a day)",
-		  borderColor: "#8e5ea2",
-		  fill: false
-	      }, { 
-		  data: iarray,
-		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
-		  borderColor: "#3cba9f",
-		  fill: false
-	      }
-			]
-
-	  },
-	  options: {
-	      /*
-	       title: {
-	       display: true,
-	       text: 'SIR model based prediction'
-	       },
-	      */
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-
-		  }],
-		  xAxes: [{
-
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-
-
-		  }]
-	      }
-	  }
-      });
-
-      // Update the graph using specified SIR configuration
-      function mupdate()
-      {
-	  beta = parseFloat(document.mconf.beta.value);
-	  gamma = parseFloat(document.mconf.gamma.value);
-	  population = parseFloat(document.mconf.population.value);
-	  init_infected = parseFloat(document.mconf.infected.value);
-	  init_removed = parseFloat(document.mconf.removed.value);
-
-	  sarray[0]=population-init_infected-init_removed;
-	  iarray[0]=init_infected;
-	  rarray[0]=init_removed;
-	  niarray[0]=0; // dummy entory
-
-	  sir_euler(beta, gamma, sarray, iarray, rarray, niarray, 0, period, N);
-	  mfig1.update();
-      }
-
-      // Reset the SIR parameters and update the graph
-      function mreset()
-      {
-	  document.mconf.beta.value = beta = beta_dflt;
-	  document.mconf.gamma.value = gamma = gamma_dflt;
-	  document.mconf.population.value = population = population_dflt;
-	  document.mconf.infected.value = init_infected = init_infected_dflt;
-	  document.mconf.removed.value = init_removed = init_removed_dflt;
-
-	  sarray[0]=population-init_infected-init_removed;
-	  iarray[0]=init_infected;
-	  rarray[0]=init_removed;
-	  niarray[0]=0; // dummy entory
-
-	  sir_euler(beta, gamma, sarray, iarray, rarray, niarray, 0, period, N);
-	  mfig1.update();
-      }
-
-
-      function mtoggle()
-      {
-	  if ( yaxis == "linear" ) {
-	      yaxis = "logarithmic";
-	  } else {
-	      yaxis = "linear";
-	  }
-
-
-	  mfig1.options = {
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-		  }],
-		  xAxes: [{
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-		  }]
-	      }
-	  }
-	  mfig1.update();
-      }
-
-
-
-      /////// Fig 2 : Take an action to reduce beta at R-th day
-      var dday=dday_dflt;
-      var beta2_1=beta_dflt;
-      var beta2_2=(beta_dflt/2).toFixed(10);
-      var gamma2=gamma_dflt;
-      var population2=population_dflt;
-      var init_infected2=init_infected_dflt;
-      var init_removed2=init_removed_dflt;
-
-
-      document.mconf2.dday.value = dday;
-      document.mconf2.beta.value = beta2_1;
-      document.mconf2.beta2.value = beta2_2;
-      document.mconf2.gamma.value = gamma2;
-      document.mconf2.population.value = population2;
-      document.mconf2.infected.value = init_infected2;
-      document.mconf2.removed.value = init_removed2;
-
-      var darray2 = new Array();  // day
-      var sarray2 = new Array();  // number of susceptible people
-      var iarray2 = new Array();  // number of infected people
-      var rarray2 = new Array();  // number of removed people
-      var niarray2 = new Array(); // newly infected people in the day
-
-      sarray2[0]=population2-init_infected2-init_removed2;
-      iarray2[0]=init_infected2;
-      rarray2[0]=init_removed2;
-      niarray2[0]=0; // dummy entory
-
-      sir_euler(beta2_1, gamma2, sarray2, iarray2, rarray2, niarray2, 0, dday+1, N);
-      sir_euler(beta2_2, gamma2, sarray2, iarray2, rarray2, niarray2, dday, period, N);
-
-      var yaxis2 = "logarithmic";
-
-      var mfig2 = new Chart(document.getElementById("strategy"), {
-	  type: 'line',
-	  data: {
-	      labels: darray,
-	      datasets: [{ 
-		  data: tokyo_ni,
-		  label: "東京の一日の新規感染者数 (Tokyo new infection in a day)             ",
-		  borderColor: "#3e95cd",
-		  fill: false
-	      }, { 
-		  data: niarray2,
-		  label: "SIRモデルによる一日の新規感染者数 (SIR new infection in a day)",
-		  borderColor: "#8e5ea2",
-		  fill: false
-	      }, { 
-		  data: iarray2,
-		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
-		  borderColor: "#3cba9f",
-		  fill: false
-	      }
-			]
-
-	  },
-	  options: {
-	      /*
-	       title: {
-	       display: true,
-	       text: 'SIR model based prediction'
-	       },
-	      */
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis2,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-		  }],
-		  xAxes: [{
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-		  }]
-	      }
-	  }
-      });
-
-      // Update the graph using specified SIR configuration
-      function mupdate2()
-      {
-
-	  dday = parseInt(document.mconf2.dday.value);
-	  beta2_1 = parseFloat(document.mconf2.beta.value);
-	  beta2_2 = parseFloat(document.mconf2.beta2.value);
-	  gamma2 = parseFloat(document.mconf2.gamma.value);
-	  population2 = parseFloat(document.mconf2.population.value);
-	  init_infected2 = parseFloat(document.mconf2.infected.value);
-	  init_removed2 = parseFloat(document.mconf2.removed.value);
-
-	  sarray2[0]=population2-init_infected2-init_removed2;
-	  iarray2[0]=init_infected2;
-	  rarray2[0]=init_removed2;
-	  niarray2[0]=0; // dummy entory
-
-	  sir_euler(beta2_1, gamma2, sarray2, iarray2, rarray2, niarray2, 0, dday+1, N);
-	  sir_euler(beta2_2, gamma2, sarray2, iarray2, rarray2, niarray2, dday, period, N);
-	  mfig2.update();
-      }
-
-      // Reset the SIR parameters and update the graph
-      function mreset2()
-      {
-	  document.mconf2.dday.value = dday = dday_dflt;
-	  document.mconf2.beta.value = beta2_1 = beta_dflt;
-	  document.mconf2.beta2.value = beta2_2 = (beta_dflt/2).toFixed(10);
-	  document.mconf2.gamma.value = gamma2 = gamma_dflt;
-	  document.mconf2.population.value = population2 = population_dflt;
-	  document.mconf2.infected.value = init_infected2 = init_infected_dflt;
-	  document.mconf2.removed.value = init_removed2 = init_removed_dflt;
-
-	  sarray2[0]=population2-init_infected2-init_removed2;
-	  iarray2[0]=init_infected2;
-	  rarray2[0]=init_removed2;
-	  niarray2[0]=0; // dummy entory
-
-	  sir_euler(beta2_1, gamma2, sarray2, iarray2, rarray2, niarray2, 0, dday+1, N);
-	  sir_euler(beta2_2, gamma2, sarray2, iarray2, rarray2, niarray2, dday, period, N);
-	  mfig2.update();
-      }
-
-
-      function mtoggle2()
-      {
-	  if ( yaxis2 == "linear" ) {
-	      yaxis2 = "logarithmic";
-	  } else {
-	      yaxis2 = "linear";
-	  }
-
-
-	  mfig2.options = {
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis2,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-		  }],
-		  xAxes: [{
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-		  }]
-	      }
-	  }
-	  mfig2.update();
-      }
-
-
-
-      /////// Fig 3 : Adjusted to the 2nd wave in Tokyo
-      var dday3=dday_dflt+120;
-      var beta3_1=(beta_dflt/2.4).toFixed(10);
-      var beta3_2=(beta_dflt/2.4).toFixed(10);
-      var gamma3=gamma_dflt;
-      var population3=population_dflt;
-      var init_infected3=50;
-      var init_removed3=init_removed_dflt;
-
-
-      document.mconf3.dday.value = dday3;
-      document.mconf3.beta.value = beta3_1;
-      document.mconf3.beta2.value = beta3_2;
-      document.mconf3.gamma.value = gamma3;
-      document.mconf3.population.value = population3;
-      document.mconf3.infected.value = init_infected3;
-      document.mconf3.removed.value = init_removed3;
-
-      var darray3 = new Array();  // day
-      var sarray3 = new Array();  // number of susceptible people
-      var iarray3 = new Array();  // number of infected people
-      var rarray3 = new Array();  // number of removed people
-      var niarray3 = new Array(); // newly infected people in the day
-
-      sarray3[0]=population2-init_infected2-init_removed2;
-      iarray3[0]=init_infected2;
-      rarray3[0]=init_removed2;
-      niarray3[0]=0; // dummy entory
-
-      sir_euler(beta_dflt/5, gamma3, sarray3, iarray3, rarray3, niarray3, 0, 61, N);
-      sir_euler(beta3_1, gamma3, sarray3, iarray3, rarray3, niarray3, 60, dday3+1, N);
-      sir_euler(beta3_2, gamma3, sarray3, iarray3, rarray3, niarray3, dday3, period, N);
-
-      var yaxis3 = "logarithmic";
-
-      var mfig3 = new Chart(document.getElementById("strategy3"), {
-	  type: 'line',
-	  data: {
-	      labels: darray,
-	      datasets: [{ 
-		  data: tokyo_ni,
-		  label: "東京の一日の新規感染者数 (Tokyo new infection in a day)             ",
-		  borderColor: "#3e95cd",
-		  fill: false
-	      }, { 
-		  data: niarray3,
-		  label: "SIRモデルによる一日の新規感染者数 (SIR new infection in a day)",
-		  borderColor: "#8e5ea2",
-		  fill: false
-	      }, { 
-		  data: iarray3,
-		  label: "SIRモデルによる現在感染中の患者数 (SIR infected)                      ",
-		  borderColor: "#3cba9f",
-		  fill: false
-	      }
-			]
-
-	  },
-	  options: {
-	      /*
-	       title: {
-	       display: true,
-	       text: 'SIR model based prediction'
-	       },
-	      */
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis3,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-		  }],
-		  xAxes: [{
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-		  }]
-	      }
-	  }
-      });
-
-      // Update the graph using specified SIR configuration
-      function mupdate3()
-      {
-
-	  dday3 = parseInt(document.mconf3.dday.value);
-	  beta3_1 = parseFloat(document.mconf3.beta.value);
-	  beta3_2 = parseFloat(document.mconf3.beta2.value);
-	  gamma3 = parseFloat(document.mconf3.gamma.value);
-	  population3 = parseFloat(document.mconf3.population.value);
-	  init_infected3 = parseFloat(document.mconf3.infected.value);
-	  init_removed3 = parseFloat(document.mconf3.removed.value);
-
-	  sarray3[0]=population3-init_infected3-init_removed3;
-	  iarray3[0]=init_infected3;
-	  rarray3[0]=init_removed3;
-	  niarray3[0]=0; // dummy entory
-
-	  sir_euler(beta_dflt/5, gamma3, sarray3, iarray3, rarray3, niarray3, 0, 61, N);
-	  sir_euler(beta3_1, gamma3, sarray3, iarray3, rarray3, niarray3, 60, dday3+1, N);
-	  sir_euler(beta3_2, gamma3, sarray3, iarray3, rarray3, niarray3, dday3, period, N);
-	  mfig3.update();
-      }
-
-      // Reset the SIR parameters and update the graph
-      function mreset3()
-      {
-	  document.mconf3.dday.value = dday3 = dday_dflt+120;
-	  document.mconf3.beta.value = beta3_1 = (beta_dflt/2.4).toFixed(10);
-	  document.mconf3.beta2.value = beta3_2 = (beta_dflt/2.4).toFixed(10);
-	  document.mconf3.gamma.value = gamma3 = gamma_dflt;
-	  document.mconf3.population.value = population3 = population_dflt;
-	  document.mconf3.infected.value = init_infected3 = 50;
-	  document.mconf3.removed.value = init_removed3 = init_removed_dflt;
-
-	  sarray3[0]=population3-init_infected3-init_removed3;
-	  iarray3[0]=init_infected3;
-	  rarray3[0]=init_removed3;
-	  niarray3[0]=0; // dummy entory
-
-	  sir_euler(beta_dflt/5, gamma3, sarray3, iarray3, rarray3, niarray3, 0, 61, N);
-	  sir_euler(beta3_1, gamma3, sarray3, iarray3, rarray3, niarray3, 60, dday3+1, N);
-	  sir_euler(beta3_2, gamma3, sarray3, iarray3, rarray3, niarray3, dday3, period, N);
-	  mfig3.update();
-      }
-
-
-      function mtoggle3()
-      {
-	  if ( yaxis3 == "linear" ) {
-	      yaxis3 = "logarithmic";
-	  } else {
-	      yaxis3 = "linear";
-	  }
-
-
-	  mfig3.options = {
-	      scales: {
-		  yAxes: [{
-		      ticks: {
-			  beginAtZero: true
-		      },
-		      type: yaxis3,
-		      scaleLabel: {
-			  display: true,
-			  labelString: '人数 (Number of people)'
-		      }
-		  }],
-		  xAxes: [{
-		      scaleLabel: {
-			  display: true,
-			  labelString: '3月15日からの日数 (Number of days from March 15 2020)'
-		      }
-		  }]
-	      }
-	  }
-	  mfig3.update();
-      }
 
       
       /////// Numeric computation
