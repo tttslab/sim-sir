@@ -228,7 +228,13 @@
        第三波のシミュレーション（新たな対策を行う場合）<br>
        2020/3/15から220日目(2020/10/21)を起点として280日目(2020/12/20)頃までの東京のデータ（主に新規感染者数）
        に合うようにパラメタを調整したもの。
-       社会的な感染対策により途中から（例えば290日目(2020/12/30)から）感染率(beta2)を少し下げれられたとすると、感染拡大をとめられる。<br>
+      社会的な感染対策により途中から（例えば290日目(2020/12/30)から）実効再生産数を１以下に下げられれば感染拡大を止められる。
+      実効再生産数は感染率(beta2)を下げるか回復率(gamma2)を高めれば小さくなる。
+      感染率を下げる手段としては、マスク使用の徹底やリモートワークの推進等などがある。
+      回復率は、感染した人が他人に感染させなくなる期間が短くなれば大きくなる。
+      感染してから回復するまでの期間は変えられないとしても、
+      COCOAを活用するなどして感染した（可能性のある）人をいち早く特定して外出の自粛要請や隔離などにより素早く他人に感染させない状態にできれば実質的に大きくすることができる。gamma2を大きくすることも重要である。
+      <br>
       <div>
 	<form name="mconf3a">
 	  <ul>
@@ -247,6 +253,9 @@
 	    <li>
 	      <label for="gamma">回復率 gamma</label>
 	      <input type="text" name="gamma"></li>
+	    <li>
+	      <label for="gamma2">対策後回復率 gamma2</label>
+	      <input type="text" name="gamma2"></li>
 	    <li>
 	      <label for="population">人口 population</label>
 	      <input type="text" name="population"></li>
@@ -276,13 +285,14 @@
       var init_infected_dflt=10;
       var init_removed_dflt=10;
       var beta_dflt=0.000000018.toFixed(10);
-      var gamma_dflt=0.05;
+      var gamma_1_dflt=0.05;
+      var gamma_2_dflt=0.05;
       var dday_dflt=24;
 
       const sirsim = class {
 	  constructor(mconf, is_act, canvas_name, 
                       population, init_infected, init_removed, 
-                      beta_1, beta_2, gamma, sday, dday, period, N) {
+                      beta_1, beta_2, gamma_1, gamma_2, sday, dday, period, N) {
             this.mconf = mconf;
             this.is_act = is_act;
             this.canvas_name = canvas_name;
@@ -292,7 +302,8 @@
             this.init_removed_dflt = init_removed;
             this.beta_1_dflt = beta_1;
             this.beta_2_dflt = beta_2;
-            this.gamma_dflt = gamma;
+            this.gamma_1_dflt = gamma_1;
+            this.gamma_2_dflt = gamma_2;
             this.sday_dflt = sday;
             this.dday_dflt = dday;
 
@@ -301,7 +312,8 @@
             this.init_removed = init_removed;
   	    this.beta_1 = beta_1;
 	    this.beta_2 = beta_2;
-            this.gamma = gamma;
+            this.gamma_1 = gamma_1;
+            this.gamma_2 = gamma_2;
             this.sday = sday;
             this.dday = dday;
             this.period = period;
@@ -311,10 +323,11 @@
             this.mconf.infected.value = init_infected;
             this.mconf.removed.value = init_removed;
             this.mconf.beta.value = beta_1;
+            this.mconf.gamma.value = gamma_1;
             if (this.is_act == 1) {
               this.mconf.beta2.value = beta_2;
+              this.mconf.gamma2.value = gamma_2;
             }
-            this.mconf.gamma.value = gamma;
             this.mconf.sday.value = sday;
             this.mconf.rday.value = sday;
             if (this.is_act == 1) {
@@ -332,26 +345,26 @@
             this.rarray[0] = init_removed;
             this.niarray[0] = 0; // dummy entory
 
-            this.beta_balance = this.gamma/(this.population - this.init_infected - this.init_removed);
+            this.beta_balance = this.gamma_1/(this.population - this.init_infected - this.init_removed);
 
             if (this.is_act == 1) {
-                sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
-                sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
-                sir_euler(this.beta_2, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
+                sir_euler(this.beta_balance, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                sir_euler(this.beta_1, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
+                sir_euler(this.beta_2, this.gamma_2, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
             } else {
-                sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
-                sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
+                sir_euler(this.beta_balance, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                sir_euler(this.beta_1, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
             }
             for (let t=0; t < this.period; t++) {
               if (this.niarray[t] < 0.3) this.niarray[t] = 0.3; // flooring for log scale plot
               if (this.iarray[t] < 0.3) this.iarray[t] = 0.3; // flooring for log scale plot
             }
 
-            this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma;
+            this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma_1;
             this.mconf.rday.value = String(this.sday);
             this.mconf.srep.value = String(this.srep.toFixed(3));
             if (this.is_act == 1) {
-              this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma;
+              this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma_2;
               this.mconf.rday2.value = String(this.dday);
               this.mconf.drep.value = String(this.drep.toFixed(3));
             }
@@ -417,10 +430,11 @@
               this.infected = parseFloat(this.mconf.infected.value);
               this.removed = parseFloat(this.mconf.removed.value);
               this.beta_1 = parseFloat(this.mconf.beta.value);
+              this.gamma_1 = parseFloat(this.mconf.gamma.value);
               if (this.is_act == 1) {
                   this.beta_2 = parseFloat(this.mconf.beta2.value);
+                  this.gamma_2 = parseFloat(this.mconf.gamma2.value);
               }
-              this.gamma = parseFloat(this.mconf.gamma.value);
               this.sday = parseInt(this.mconf.sday.value);
               if (this.is_act == 1) {
                   this.dday = parseInt(this.mconf.dday.value);
@@ -431,26 +445,26 @@
               this.rarray[0] = this.removed;
               this.niarray[0] = 0; // dummy entory
 
-              this.beta_balance = this.gamma/(this.population - this.init_infected - this.init_removed);
+              this.beta_balance = this.gamma_1/(this.population - this.init_infected - this.init_removed);
 
               if (this.is_act == 1) {
-                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
-                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
-                  sir_euler(this.beta_2, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
+                  sir_euler(this.beta_balance, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
+                  sir_euler(this.beta_2, this.gamma_2, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
               } else {
-                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
-                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
+                  sir_euler(this.beta_balance, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
               }
               for (let t=0; t < this.period; t++) {
                 if (this.niarray[t] < 0.3) this.niarray[t] = 0.3; // flooring for log scale plot
                 if (this.iarray[t] < 0.3) this.iarray[t] = 0.3; // flooring for log scale plot
               }
 
-              this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma;
+              this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma_1;
               this.mconf.rday.value = String(this.sday);
               this.mconf.srep.value = String(this.srep.toFixed(3));
               if (this.is_act == 1) {
-                this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma;
+                this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma_2;
                 this.mconf.rday2.value = String(this.dday);
                 this.mconf.drep.value = String(this.drep.toFixed(3));
               }
@@ -466,10 +480,11 @@
               this.mconf.infected.value = this.infected = this.init_infected_dflt;
               this.mconf.removed.value = this.removed = this.init_removed_dflt;
               this.mconf.beta.value = this.beta_1 = this.beta_1_dflt;
+              this.mconf.gamma.value = this.gamma_1 = this.gamma_1_dflt;
               if (this.is_act == 1) {
                   this.mconf.beta2.value = this.beta_2 = this.beta_2_dflt
+                  this.mconf.gamma2.value = this.gamma_2 = this.gamma_2_dflt;
               }
-              this.mconf.gamma.value = this.gamma = this.gamma_dflt;
               this.mconf.sday.value = this.sday = this.sday_dflt;
               if (this.is_act == 1) {
                   this.mconf.dday.value = this.dday = this.dday_dflt;
@@ -480,27 +495,27 @@
               this.rarray[0] = this.removed;
               this.niarray[0] = 0; // dummy entory
 
-              this.beta_balance = this.gamma/(this.population - this.init_infected - this.init_removed);
+              this.beta_balance = this.gamma_1/(this.population - this.init_infected - this.init_removed);
 
               if (this.is_act == 1) {
-                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
-                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
-                  sir_euler(this.beta_2, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
+                  sir_euler(this.beta_balance, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.dday+1, this.N);
+                  sir_euler(this.beta_2, this.gamma_2, this.sarray, this.iarray, this.rarray, this.niarray, this.dday, this.period, this.N);
 
               } else {
-                  sir_euler(this.beta_balance, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
-                  sir_euler(this.beta_1, this.gamma, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
+                  sir_euler(this.beta_balance, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, 0, this.sday+1, N);
+                  sir_euler(this.beta_1, this.gamma_1, this.sarray, this.iarray, this.rarray, this.niarray, this.sday, this.period, this.N);
               }
               for (let t=0; t < this.period; t++) {
                 if (this.niarray[t] < 0.3) this.niarray[t] = 0.3; // flooring for log scale plot
                 if (this.iarray[t] < 0.3) this.iarray[t] = 0.3; // flooring for log scale plot
               }
 
-              this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma;
+              this.srep = this.beta_1 * this.sarray[this.sday] / this.gamma_1;
               this.mconf.rday.value = String(this.sday);
               this.mconf.srep.value = String(this.srep.toFixed(3));
               if (this.is_act == 1) {
-                this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma;
+                this.drep = this.beta_2 * this.sarray[this.dday] / this.gamma_2;
                 this.mconf.rday2.value = String(this.dday);
                 this.mconf.drep.value = String(this.drep.toFixed(3));
               }
@@ -562,19 +577,19 @@ tokyo_ni[1] = 0.3; // flooring for log-scale plot
 
       var sirwave1 = new sirsim(document.mconf, 0, "sirwave1",
                                population_dflt, 15, init_removed_dflt,
-                               2.5e-8, 0, 0.2, 0, 0, period, N);
+				2.5e-8, 0, 0.2, 0, 0, 0, period, N);
 
       var sirwave2 = new sirsim(document.mconf2, 0, "sirwave2",
                                population_dflt, 50, init_removed_dflt,
-                               1.8e-8, 0, 0.2, 70, 0, period, N);
+				1.8e-8, 0, 0.2, 0, 70, 0, period, N);
 
       var sirwave3 = new sirsim(document.mconf3, 0, "sirwave3",
                                population_dflt, 800, 50000,
-                               1.62e-8, 0, 0.2, 220, 0, period, N);
+				1.62e-8, 0, 0.2, 0, 220, 0, period, N);
 
       var sirwave3a = new sirsim(document.mconf3a, 1, "sirwave3a",
                                population_dflt, 800, 50000,
-                               1.62e-8, 1.62e-8*0.85, 0.2, 220, 290, period, N);
+				 1.62e-8, 1.62e-8*0.85, 0.2, 0.21, 220, 290, period, N);
 
 
       /////// Tokyo Data (Online)
