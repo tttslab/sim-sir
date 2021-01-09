@@ -32,9 +32,22 @@ $idx2ymd = [];
 $idx=0;
 $mon=3; // Let's start from March 15
 $day=15; 
-foreach ( [31, 30, 31, 30, 31, 31, 30] as $nday ) { // Num of days in Mar, Apr, .., Sep, 2020
+foreach ( [31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as $nday ) { // Num of days in Mar, Apr, .., Dec in 2020
     for ( $i=$day; $i<=$nday; $i++ ) {
         $ymd = sprintf("2020-%02d-%02d", $mon, $i);
+        $ymd2idx[$ymd] = $idx;
+        $idx2ymd[$idx] = $ymd;
+//        var_dump($ymd);
+        $idx++;
+    }
+    $mon++;
+    $day=1;
+}
+$mon=1;
+$day=1;
+foreach ( [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as $nday ) { // Num of days in Jan, .., Dec in 2021
+    for ( $i=$day; $i<=$nday; $i++ ) {
+        $ymd = sprintf("2021-%02d-%02d", $mon, $i);
         $ymd2idx[$ymd] = $idx;
         $idx2ymd[$idx] = $ymd;
 //        var_dump($ymd);
